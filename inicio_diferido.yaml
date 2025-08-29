@@ -58,13 +58,11 @@ action:
       duracion_horas: !input duracion_horas
       input_mejor_franja: !input input_mejor_franja
       prices: >
-        {% set p = namespace(list=[]) %}
-        {% for i in range(24) %}
-          {% set attr = 'price_' + (i|string).zfill(2) + 'h' %}
-          {% set value = state_attr(pvpc_sensor, attr) %}
-          {% set _ = p.list.append(value if value is not none else 9999) %}
-        {% endfor %}
-        {{ p.list }}
+        [
+          {% for i in range(24) -%}
+            {{ state_attr(pvpc_sensor, 'price_' + (i|string).zfill(2) + 'h') | default(9999) }}{{ "," if not loop.last else "" }}
+          {%- endfor %}
+        ]
       min_sum: 9999
       min_index: 0
       window: duracion_horas

@@ -26,11 +26,27 @@ blueprint:
           step: 1
     input_mejor_franja:
       name: Variable para almacenar la hora de inicio
-      description: Input_number que recibirá la hora de inicio de la mejor franja
+      description: Input_number que recibirá la hora de inicio de la siguiente mejor franja
       selector:
         entity:
           filter:
             domain: input_number
+    actions_yes:
+      name: Acciones en la franja
+      description: Acciones que se ejecutan en la mejor franja.
+      icon: mdi:check
+      collapsed: true
+      input:
+        action_on_before:
+          name: Acciones antes de encender el dispositivo
+          default: []
+          selector:
+            action: {}
+        action_on_after:
+          name: Acciones despues de encender el dispositivo
+          default: []
+          selector:
+            action: {}
 
 triggers:
   - trigger: time_pattern
@@ -49,6 +65,11 @@ action:
       min_sum: 9999
       min_index: 0
       window: duracion_horas
+      now_hour: "{{ now().hour }}"
+      start_opt: "{{ min_index }}"
+      end_opt: "{{ min_index + window - 1 }}"
+      start_now: "{{ now_hour }}"
+      end_now: "{{ now_hour + window - 1 }}"
   - repeat:
       count: "{{ 24 - window + 1 }}"
       sequence:
@@ -70,14 +91,16 @@ action:
       value: "{{ min_index }}"
   - choose:
       - conditions: >
-          {{ (now().hour >= min_index) and (now().hour < (min_index + window)) }}
+          {{ (start_now >= start_opt) and (end_now <= end_opt) }}
         sequence:
-          - action: switch.turn_on
+          - choose:
+              - conditions: "{{ actions_yes.action_on_before != [] }}"
+                sequence: "{{ actions_yes.action_on_before }}"
+          - service: switch.turn_on
             target:
               entity_id: "{{ switch_dispositivo.entity_id }}"
-          - delay:
-              hours: "{{ window }}"
-          - action: switch.turn_off
-            target:
-              entity_id: "{{ switch_dispositivo.entity_id }}"
+          - choose:
+              - conditions: "{{ actions_yes.action_on_after != [] }}"
+                sequence: "{{ actions_yes.action_on_after }}"
+
 mode: single

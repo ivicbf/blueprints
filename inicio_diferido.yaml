@@ -100,6 +100,6 @@ action:
             entity_id: "{{ switch_dispositivo.entity_id }}"
         - choose:
             - conditions: "{{ actions_yes.action_on_after is defined }}"
-              sequence: !input action_off_before
+              sequence: !input action_on_after
 
 mode: single

@@ -11,7 +11,7 @@ blueprint:
             integration: pvpc_hourly_pricing
     target_device:
       name: Dispositivo a controlar
-      description: ''
+      description: 'Dispositivo a controlar'
       selector:
         target:
     slot:

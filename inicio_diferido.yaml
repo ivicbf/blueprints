@@ -76,12 +76,12 @@ action:
   - variables:
       min_sum: 9999
       min_index: 0
-      window: slot
+      window: "{{ slot | int }}"
   - repeat:
       count: "{{ 24 - window + 1 }}"
       sequence:
         - variables:
-            idx: "{{ repeat.index0 }}"
+            idx: "{{ repeat.index - 1 }}"
             window_sum: "{{ prices[idx:idx+window] | sum }}"
         - choose:
             - conditions: "{{ window_sum < min_sum }}"

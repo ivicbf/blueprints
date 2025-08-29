@@ -53,55 +53,26 @@ triggers:
 
 action:
   - variables:
-      pvpc_sensor: !input pvpc_sensor
-      switch_dispositivo: !input switch_dispositivo
-      duracion_horas: !input duracion_horas
-      input_mejor_franja: !input input_mejor_franja
-      prices: >
-        [
-          {% for i in range(24) -%}
-            {{ (state_attr(pvpc_sensor, 'price_' + (i|string).zfill(2) + 'h') | float(9999)) }}{{ "," if not loop.last else "" }}
-          {%- endfor %}
-        ]
-      min_sum: 9999
-      min_index: 0
-      window: duracion_horas
+      best_start: "{{ states(pvpc_sensor.entity_id) | int }}"
+      duracion: !input duracion_horas
       now_hour: "{{ now().hour }}"
-      start_opt: "{{ min_index | int }}"
-      end_opt: "{{ (min_index + window - 1) | int }}"
-      start_now: "{{ now_hour | int }}"
-      end_now: "{{ (now_hour + window - 1) | int }}"
-  - repeat:
-      count: "{{ 24 - window + 1 }}"
-      sequence:
-        - variables:
-            idx: "{{ repeat.index0 }}"
-            window_sum: >
-              {{ prices[idx:idx+window] | sum }}
-        - choose:
-            - conditions:
-                - "{{ window_sum < min_sum }}"
-              sequence:
-                - variables:
-                    min_sum: "{{ window_sum }}"
-                    min_index: "{{ idx }}"
-  - action: input_number.set_value
+  - service: input_number.set_value
     target:
-      entity_id: "{{ input_mejor_franja }}"
+      entity_id: !input input_mejor_franja
     data:
-      value: "{{ min_index }}"
+      value: "{{ best_start }}"
   - choose:
       - conditions: >
-          {{ (start_now >= start_opt) and (end_now <= end_opt) }}
+          {{ now_hour >= best_start and now_hour < (best_start + duracion) }}
         sequence:
-        - choose:
-            - conditions: "{{ actions_yes.action_on_before is defined }}"
-              sequence: !input action_on_before
-        - service: switch.turn_on
-          target:
-            entity_id: "{{ switch_dispositivo }}"
-        - choose:
-            - conditions: "{{ actions_yes.action_on_after is defined }}"
-              sequence: !input action_on_after
+          - choose:
+              - conditions: "{{ actions_yes.action_on_before is defined }}"
+                sequence: !input actions_yes.action_on_before
+          - service: switch.turn_on
+            target:
+              entity_id: !input switch_dispositivo
+          - choose:
+              - conditions: "{{ actions_yes.action_on_after is defined }}"
+                sequence: !input actions_yes.action_on_after
 
 mode: single

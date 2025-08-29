@@ -1,6 +1,6 @@
 blueprint:
   name: Inicio diferido
-  description: Detecta la mejor franja consecutiva con menor precio y activa el dispositivo durante esa franja.
+  description: Detecta la mejor franja consecutiva con menor precio PVPC y activa el dispositivo durante esa franja.
   domain: automation
   input:
     sensor_precio:
@@ -10,14 +10,14 @@ blueprint:
           filter:
             domain: sensor
     switch_dispositivo:
-      name: Dispositivo a controlar (switch)
+      name: Dispositivo a controlar
       selector:
         entity:
           filter:
             domain: switch
     duracion_horas:
       name: Duración en horas de la franja
-      description: Número de horas consecutivas para evaluar y activar el dispositivo (ej. 3)
+      description: Número de horas consecutivas para evaluar y activar el dispositivo
       default: 3
       selector:
         number:
@@ -25,7 +25,7 @@ blueprint:
           max: 24
           step: 1
     input_mejor_franja:
-      name: Input Number para guardar hora inicio mejor franja
+      name: Variable para almacenar la hora de inicio
       description: Input_number que recibirá la hora de inicio de la mejor franja
       selector:
         entity:

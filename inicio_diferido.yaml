@@ -80,7 +80,6 @@ action:
             {{ state_attr(pvpc_sensor.entity_id, 'price_' + (i|string).zfill(2) + 'h') | float(9999) }}{{ "," if not loop.last else "" }}
           {%- endfor %}
         ]
-  - variables:
       windows: >
         {% set list = [] %}
         {% for i in range(24 - slot + 1) %}
@@ -88,15 +87,12 @@ action:
           {% set list = list + [(i, s)] %}
         {% endfor %}
         {{ list }}
-  - variables:
       min_sum: >
         {{ windows | map(attribute=1) | min }}
       min_index: >
         {{ windows | selectattr('1','equalto',min_sum) | map(attribute=0) | first }}
-  - variables:
       future_windows: >
         {{ windows | selectattr('0','ge',now_hour) | list }}
-  - variables:
       future_min_sum: >
         {% if future_windows|length > 0 %}
           {{ future_windows | map(attribute=1) | min }}
@@ -109,7 +105,6 @@ action:
         {% else %}
           -1
         {% endif %}
-  - variables:
       selected_index: >
         {% if future_min_sum <= min_sum * (1 + tolerance) %}
           {{ future_min_index }}

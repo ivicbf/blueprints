@@ -94,12 +94,12 @@ action:
         sequence:
         - choose:
             - conditions: "{{ actions_yes.action_on_before is defined }}"
-              sequence: !input actions_yes.action_on_before
+              sequence: !input action_on_before
         - service: switch.turn_on
           target:
             entity_id: "{{ switch_dispositivo.entity_id }}"
         - choose:
             - conditions: "{{ actions_yes.action_on_after is defined }}"
-              sequence: !input actions_yes.action_on_after
+              sequence: !input action_off_before
 
 mode: single

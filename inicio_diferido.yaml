@@ -54,6 +54,10 @@ triggers:
 action:
   - variables:
       pvpc_sensor: !input pvpc_sensor
+      switch_dispositivo: !input switch_dispositivo
+      duracion_horas: !input duracion_horas
+      input_mejor_franja: !input input_mejor_franja
+      actions_yes: !input actions_yes
       prices: >
         {% set p = namespace(list=[]) %}
         {% for i in range(24) %}

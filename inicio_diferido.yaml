@@ -71,7 +71,8 @@ triggers:
 
 action:
   - variables:
-      slot: "{{ slot | int }}"
+      # slot: "{{ slot | int }}"
+      slot: !input slot
       now_hour: "{{ now().hour }}"
       tolerance: "{{ (tolerance_percentage / 100) | float }}"
       prices: >

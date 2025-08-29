@@ -127,12 +127,12 @@ action:
       - conditions: "{{ selected_index != -1 and now_hour >= selected_index and now_hour < (selected_index + slot) }}"
         sequence:
           - choose:
-              - conditions: "{{ action_on_before is defined }}"
-                sequence: !input action_on_before
+              - conditions: "{{ input_on_before is defined }}"
+                sequence: !input input_on_before
           - service: switch.turn_on
             target: !input target_device
           - choose:
-              - conditions: "{{ action_on_after is defined }}"
-                sequence: !input action_on_after
+              - conditions: "{{ input_on_after is defined }}"
+                sequence: !input input_on_after
 
 mode: single

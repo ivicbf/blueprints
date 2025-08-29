@@ -50,6 +50,8 @@ action:
       best_start: "{{ states(pvpc_sensor.entity_id) | int }}"
       duracion: !input duracion_horas
       now_hour: "{{ now().hour }}"
+      action_on_after: !input action_on_after
+      action_on_before: !input action_on_before
   - service: input_number.set_value
     target:
       entity_id: !input input_mejor_franja

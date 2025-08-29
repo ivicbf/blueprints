@@ -30,13 +30,12 @@ blueprint:
         entity:
           filter:
             domain: input_number
-    input_on_before:
+    action_on_before:
       name: Acciones antes de encender el dispositivo
       default: []
       selector:
         action: {}
-
-    input_on_after:
+    action_on_after:
       name: Acciones después de encender el dispositivo
       default: []
       selector:

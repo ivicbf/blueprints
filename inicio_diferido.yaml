@@ -30,22 +30,22 @@ blueprint:
         entity:
           filter:
             domain: input_number
-    actions_yes:
-      name: Acciones en la franja
-      description: Acciones que se ejecutan en la mejor franja.
-      icon: mdi:check
-      collapsed: true
-      input:
-        action_on_before:
-          name: Acciones antes de encender el dispositivo
-          default: []
-          selector:
-            action: {}
-        action_on_after:
-          name: Acciones despues de encender el dispositivo
-          default: []
-          selector:
-            action: {}
+    # actions_yes:
+    #   name: Acciones en la franja
+    #   description: Acciones que se ejecutan en la mejor franja.
+    #   icon: mdi:check
+    #   collapsed: true
+    #   input:
+    #     action_on_before:
+    #       name: Acciones antes de encender el dispositivo
+    #       default: []
+    #       selector:
+    #         action: {}
+    #     action_on_after:
+    #       name: Acciones despues de encender el dispositivo
+    #       default: []
+    #       selector:
+    #         action: {}
     input_on_before:
       name: Acciones antes de encender el dispositivo
       default: []
@@ -68,7 +68,7 @@ variables:
   prices: >
     [
       {% for i in range(24) -%}
-        {{ state_attr(pvpc_sensor.entity_id, 'price_' + (i|string).zfill(2) + 'h') | float(9999) }}{{ "," if not loop.last else "" }}
+        {{ state_attr(pvpc_sensor, 'price_' + (i|string).zfill(2) + 'h') | float(9999) }}{{ "," if not loop.last else "" }}
       {%- endfor %}
     ]
 

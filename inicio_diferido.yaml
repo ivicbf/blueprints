@@ -60,17 +60,17 @@ action:
       prices: >
         [
           {% for i in range(24) -%}
-            {{ state_attr(pvpc_sensor, 'price_' + (i|string).zfill(2) + 'h') | default(9999) }}{{ "," if not loop.last else "" }}
+            {{ (state_attr(pvpc_sensor, 'price_' + (i|string).zfill(2) + 'h') | float(9999)) }}{{ "," if not loop.last else "" }}
           {%- endfor %}
         ]
       min_sum: 9999
       min_index: 0
       window: duracion_horas
       now_hour: "{{ now().hour }}"
-      start_opt: "{{ min_index }}"
-      end_opt: "{{ min_index + window - 1 }}"
-      start_now: "{{ now_hour }}"
-      end_now: "{{ now_hour + window - 1 }}"
+      start_opt: "{{ min_index | int }}"
+      end_opt: "{{ (min_index + window - 1) | int }}"
+      start_now: "{{ now_hour | int }}"
+      end_now: "{{ (now_hour + window - 1) | int }}"
   - repeat:
       count: "{{ 24 - window + 1 }}"
       sequence:

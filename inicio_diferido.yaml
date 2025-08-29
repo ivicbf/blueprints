@@ -3,7 +3,7 @@ blueprint:
   description: Detecta la mejor franja consecutiva con menor precio PVPC y activa el dispositivo durante esa franja.
   domain: automation
   input:
-    sensor_precio:
+    pvpc_sensor:
       name: Sensor de precios PVPC
       selector:
         entity:
@@ -53,11 +53,12 @@ triggers:
 
 action:
   - variables:
+      pvpc_sensor: !input pvpc_sensor
       prices: >
         {% set p = namespace(list=[]) %}
         {% for i in range(24) %}
           {% set attr = 'price_' + (i|string).zfill(2) + 'h' %}
-          {% set value = state_attr(sensor_precio.entity_id, attr) %}
+          {% set value = state_attr(pvpc_sensor.entity_id, attr) %}
           {% set _ = p.list.append(value if value is not none else 9999) %}
         {% endfor %}
         {{ p.list }}

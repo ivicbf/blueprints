@@ -97,13 +97,13 @@ action:
           {{ (start_now >= start_opt) and (end_now <= end_opt) }}
         sequence:
         - choose:
-            - conditions: "{{ actions_yes.action_on_before is defined }}"
+            - conditions: "{{ true }}"
               sequence: !input action_on_before
         - service: switch.turn_on
           target:
             entity_id: "{{ switch_dispositivo.entity_id }}"
         - choose:
-            - conditions: "{{ actions_yes.action_on_after is defined }}"
+            - conditions: "{{ true }}"
               sequence: !input action_on_after
 
 mode: single

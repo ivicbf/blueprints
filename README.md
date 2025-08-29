@@ -1,0 +1,2 @@
+# blueprints
+Blueprints para HomeAssistant

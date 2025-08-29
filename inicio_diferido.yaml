@@ -134,5 +134,4 @@ action:
           - choose:
               - conditions: "{{ input_on_after is defined }}"
                 sequence: !input input_on_after
-
 mode: single

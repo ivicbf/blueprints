@@ -92,14 +92,14 @@ action:
       - conditions: >
           {{ (start_now >= start_opt) and (end_now <= end_opt) }}
         sequence:
-          - choose:
-              - conditions: "{{ actions_yes.action_on_before != [] }}"
-                sequence: "{{ actions_yes.action_on_before }}"
-          - service: switch.turn_on
-            target:
-              entity_id: "{{ switch_dispositivo.entity_id }}"
-          - choose:
-              - conditions: "{{ actions_yes.action_on_after != [] }}"
-                sequence: "{{ actions_yes.action_on_after }}"
+        - choose:
+            - conditions: "{{ actions_yes.action_on_before is defined }}"
+              sequence: !input actions_yes.action_on_before
+        - service: switch.turn_on
+          target:
+            entity_id: "{{ switch_dispositivo.entity_id }}"
+        - choose:
+            - conditions: "{{ actions_yes.action_on_after is defined }}"
+              sequence: !input actions_yes.action_on_after
 
 mode: single

@@ -65,8 +65,7 @@ action:
               - conditions: "{{ action_on_before is defined }}"
                 sequence: !input action_on_before
           - service: switch.turn_on
-            target:
-              entity_id: !input switch_dispositivo
+            target: !input switch_dispositivo
           - choose:
               - conditions: "{{ action_on_after is defined }}"
                 sequence: !input action_on_after

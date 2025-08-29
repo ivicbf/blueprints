@@ -73,6 +73,7 @@ action:
   - variables:
       # slot: "{{ slot | int }}"
       slot: !input slot
+      tolerance_percentage: !input tolerance_percentage
       now_hour: "{{ now().hour }}"
       tolerance: "{{ (tolerance_percentage / 100) | float }}"
       prices: >

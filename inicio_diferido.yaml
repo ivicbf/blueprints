@@ -1,0 +1,83 @@
+blueprint:
+  name: Inicio diferido
+  description: Detecta la mejor franja consecutiva con menor precio y activa el dispositivo durante esa franja.
+  domain: automation
+  input:
+    sensor_precio:
+      name: Sensor de precios PVPC
+      selector:
+        entity:
+          filter:
+            domain: sensor
+    switch_dispositivo:
+      name: Dispositivo a controlar (switch)
+      selector:
+        entity:
+          filter:
+            domain: switch
+    duracion_horas:
+      name: Duración en horas de la franja
+      description: Número de horas consecutivas para evaluar y activar el dispositivo (ej. 3)
+      default: 3
+      selector:
+        number:
+          min: 1
+          max: 24
+          step: 1
+    input_mejor_franja:
+      name: Input Number para guardar hora inicio mejor franja
+      description: Input_number que recibirá la hora de inicio de la mejor franja
+      selector:
+        entity:
+          filter:
+            domain: input_number
+
+triggers:
+  - trigger: time_pattern
+    minutes: 0
+
+action:
+  - variables:
+      prices: >
+        {% set p = namespace(list=[]) %}
+        {% for i in range(24) %}
+          {% set attr = 'price_' + (i|string).zfill(2) + 'h' %}
+          {% set value = state_attr(sensor_precio.entity_id, attr) %}
+          {% set _ = p.list.append(value if value is not none else 9999) %}
+        {% endfor %}
+        {{ p.list }}
+      min_sum: 9999
+      min_index: 0
+      window: duracion_horas
+  - repeat:
+      count: "{{ 24 - window + 1 }}"
+      sequence:
+        - variables:
+            idx: "{{ repeat.index0 }}"
+            window_sum: >
+              {{ prices[idx:idx+window] | sum }}
+        - choose:
+            - conditions:
+                - "{{ window_sum < min_sum }}"
+              sequence:
+                - variables:
+                    min_sum: "{{ window_sum }}"
+                    min_index: "{{ idx }}"
+  - action: input_number.set_value
+    target:
+      entity_id: "{{ input_mejor_franja.entity_id }}"
+    data:
+      value: "{{ min_index }}"
+  - choose:
+      - conditions: >
+          {{ (now().hour >= min_index) and (now().hour < (min_index + window)) }}
+        sequence:
+          - action: switch.turn_on
+            target:
+              entity_id: "{{ switch_dispositivo.entity_id }}"
+          - delay:
+              hours: "{{ window }}"
+          - action: switch.turn_off
+            target:
+              entity_id: "{{ switch_dispositivo.entity_id }}"
+mode: single

@@ -9,12 +9,13 @@ blueprint:
         entity:
           filter:
             integration: pvpc_hourly_pricing
-    switch_dispositivo:
+    target_device:
       name: Dispositivo a controlar
-      default: {}
+      icon: mdi:target
+      description: ''
       selector:
         target:
-    duracion_horas:
+    slot:
       name: Duración en horas de la franja
       description: Número de horas consecutivas para evaluar y activar el dispositivo
       default: 3
@@ -23,19 +24,35 @@ blueprint:
           min: 1
           max: 24
           step: 1
-    input_mejor_franja:
+    input_best_slot:
       name: Variable para almacenar la hora de inicio
       description: Input_number que recibirá la hora de inicio de la siguiente mejor franja
       selector:
         entity:
           filter:
             domain: input_number
-    action_on_before:
+    actions_yes:
+      name: Acciones en la franja
+      description: Acciones que se ejecutan en la mejor franja.
+      icon: mdi:check
+      collapsed: true
+      input:
+        action_on_before:
+          name: Acciones antes de encender el dispositivo
+          default: []
+          selector:
+            action: {}
+        action_on_after:
+          name: Acciones despues de encender el dispositivo
+          default: []
+          selector:
+            action: {}
+    input_on_before:
       name: Acciones antes de encender el dispositivo
       default: []
       selector:
         action: {}
-    action_on_after:
+    input_on_after:
       name: Acciones después de encender el dispositivo
       default: []
       selector:
@@ -45,29 +62,55 @@ triggers:
   - trigger: time_pattern
     minutes: 0
 
+variables:
+  pvpc_sensor: !input pvpc_sensor
+  target_device: !input target_device
+  slot: !input slot
+  prices: >
+    [
+      {% for i in range(24) -%}
+        {{ state_attr(pvpc_sensor.entity_id, 'price_' + (i|string).zfill(2) + 'h') | float(9999) }}{{ "," if not loop.last else "" }}
+      {%- endfor %}
+    ]
+
 action:
   - variables:
-      best_start: "{{ states(pvpc_sensor.entity_id) | int }}"
-      duracion: !input duracion_horas
-      now_hour: "{{ now().hour }}"
-      action_on_after: !input action_on_after
-      action_on_before: !input action_on_before
+      min_sum: 9999
+      min_index: 0
+      window: slot
+  - repeat:
+      count: "{{ 24 - window + 1 }}"
+      sequence:
+        - variables:
+            idx: "{{ repeat.index0 }}"
+            window_sum: "{{ prices[idx:idx+window] | sum }}"
+        - choose:
+            - conditions: "{{ window_sum < min_sum }}"
+              sequence:
+                - variables:
+                    min_sum: "{{ window_sum }}"
+                    min_index: "{{ idx }}"
   - service: input_number.set_value
     target:
-      entity_id: !input input_mejor_franja
+      entity_id: !input input_best_slot
     data:
-      value: "{{ best_start }}"
+      value: "{{ min_index }}"
+  - variables:
+      now_hour: "{{ now().hour }}"
+      start_opt: "{{ min_index }}"
+      end_opt: "{{ min_index + window - 1 }}"
+      start_now: "{{ now_hour }}"
+      end_now: "{{ now_hour + window - 1 }}"
   - choose:
-      - conditions: >
-          {{ now_hour >= best_start and now_hour < (best_start + duracion) }}
+      - conditions: "{{ (start_now >= start_opt) and (end_now <= end_opt) }}"
         sequence:
           - choose:
-              - conditions: "{{ action_on_before is defined }}"
-                sequence: !input action_on_before
+              - conditions: "{{ input_on_before is defined }}"
+                sequence: !input input_on_before
           - service: switch.turn_on
-            target: !input switch_dispositivo
+            target: !input target_device
           - choose:
-              - conditions: "{{ action_on_after is defined }}"
-                sequence: !input action_on_after
+              - conditions: "{{ input_on_after is defined }}"
+                sequence: !input input_on_after
 
 mode: single

@@ -8,13 +8,12 @@ blueprint:
       selector:
         entity:
           filter:
-            domain: sensor
+            integration: pvpc_hourly_pricing
     switch_dispositivo:
       name: Dispositivo a controlar
+      default: {}
       selector:
-        entity:
-          filter:
-            domain: switch
+        target:
     duracion_horas:
       name: Duración en horas de la franja
       description: Número de horas consecutivas para evaluar y activar el dispositivo

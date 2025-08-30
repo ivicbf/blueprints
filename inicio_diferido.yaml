@@ -103,8 +103,8 @@ variables:
       -1
     {% endif %}
 future_windows: >
-    {% if windows|length > 0 %}
-      {{ windows | selectattr('0','ge',now_hour) | list }}
+    {% if windows | length > 0 %}
+      {{ windows | selectattr('0','ge', now_hour | int) | list }}
     {% else %}
       []
     {% endif %}

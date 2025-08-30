@@ -69,53 +69,53 @@ triggers:
   - trigger: time_pattern
     minutes: 0
 
-  - variables:
-      pvpc_sensor: !input pvpc_sensor
-      target_device: !input target_device
-      slot: !input slot
-      # slot: "{{ slot | int }}"
-      tolerance_percentage: !input tolerance_percentage
-      tolerance: "{{ (tolerance_percentage / 100) | float }}"
-      now_hour: "{{ now().hour }}"
-      prices: >
-        [
-          {% for i in range(24) -%}
-            {{ state_attr(pvpc_sensor.entity_id, 'price_' + (i|string).zfill(2) + 'h') | float(9999) }}{{ "," if not loop.last else "" }}
-          {%- endfor %}
-        ]
-      windows: >
-        {% set list = [] %}
-        {% for i in range(24 - slot + 1) %}
-          {% set s = prices[i:i+slot] | sum %}
-          {% set list = list + [(i, s)] %}
-        {% endfor %}
-        {{ list }}
-      min_sum: >
-        {{ windows | map(attribute=1) | min }}
-      min_index: >
-        {{ windows | selectattr('1','equalto',min_sum) | map(attribute=0) | first }}
-      future_windows: >
-        {{ windows | selectattr('0','ge',now_hour) | list }}
-      future_min_sum: >
-        {% if future_windows|length > 0 %}
-          {{ future_windows | map(attribute=1) | min }}
-        {% else %}
-          99999
-        {% endif %}
-      future_min_index: >
-        {% if future_windows|length > 0 %}
-          {{ future_windows | selectattr('1','equalto',future_min_sum) | map(attribute=0) | first }}
-        {% else %}
-          -1
-        {% endif %}
-      selected_index: >
-        {% if future_min_sum <= min_sum * (1 + tolerance) %}
-          {{ future_min_index }}
-        {% elif now_hour >= min_index and now_hour < (min_index + slot) %}
-          {{ min_index }}
-        {% else %}
-          -1
-        {% endif %}
+variables:
+  pvpc_sensor: !input pvpc_sensor
+  target_device: !input target_device
+  slot: !input slot
+  # slot: "{{ slot | int }}"
+  tolerance_percentage: !input tolerance_percentage
+  tolerance: "{{ (tolerance_percentage / 100) | float }}"
+  now_hour: "{{ now().hour }}"
+  prices: >
+    [
+      {% for i in range(24) -%}
+        {{ state_attr(pvpc_sensor.entity_id, 'price_' + (i|string).zfill(2) + 'h') | float(9999) }}{{ "," if not loop.last else "" }}
+      {%- endfor %}
+    ]
+  windows: >
+    {% set list = [] %}
+    {% for i in range(24 - slot + 1) %}
+      {% set s = prices[i:i+slot] | sum %}
+      {% set list = list + [(i, s)] %}
+    {% endfor %}
+    {{ list }}
+  min_sum: >
+    {{ windows | map(attribute=1) | min }}
+  min_index: >
+    {{ windows | selectattr('1','equalto',min_sum) | map(attribute=0) | first }}
+  future_windows: >
+    {{ windows | selectattr('0','ge',now_hour) | list }}
+  future_min_sum: >
+    {% if future_windows|length > 0 %}
+      {{ future_windows | map(attribute=1) | min }}
+    {% else %}
+      99999
+    {% endif %}
+  future_min_index: >
+    {% if future_windows|length > 0 %}
+      {{ future_windows | selectattr('1','equalto',future_min_sum) | map(attribute=0) | first }}
+    {% else %}
+      -1
+    {% endif %}
+  selected_index: >
+    {% if future_min_sum <= min_sum * (1 + tolerance) %}
+      {{ future_min_index }}
+    {% elif now_hour >= min_index and now_hour < (min_index + slot) %}
+      {{ min_index }}
+    {% else %}
+      -1
+    {% endif %}
 
 action:
   - service: input_number.set_value

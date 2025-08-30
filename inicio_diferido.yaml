@@ -30,14 +30,6 @@ blueprint:
         entity:
           filter:
             domain: input_number
-    tolerance_percentage:
-      name: Margen de tolerancia (%) para aceptar ventana siguiente
-      default: 20
-      selector:
-        number:
-          min: 0
-          max: 100
-          step: 1
     # actions_yes:
     #   name: Acciones en la franja
     #   description: Acciones que se ejecutan en la mejor franja.
@@ -73,70 +65,43 @@ variables:
   pvpc_sensor: !input pvpc_sensor
   target_device: !input target_device
   slot: !input slot
-  tolerance_percentage: !input tolerance_percentage
-  tolerance: "{{ (tolerance_percentage / 100) | float }}"
-  now_hour: "{{ now().hour | int }}"
   prices: >
     [
       {% for i in range(24) -%}
         {{ state_attr(pvpc_sensor, 'price_' + (i|string).zfill(2) + 'h') | float(9999) }}{{ "," if not loop.last else "" }}
       {%- endfor %}
     ]
-  windows: >
-    {% set out = [] %}
-    {% set slot_int = slot | int %}
-    {% for i in range(24 - slot_int + 1) %}
-      {% set s = (prices[i:i+slot_int] | sum) | float %}
-      {% set out = out + [[i, s]] %}
-    {% endfor %}
-    {{ out }}
-  min_sum: >
-    {% if windows | length > 0 %}
-      {{ windows | map(attribute=1) | min }}
-    {% else %}
-      99999
-    {% endif %}
-  min_index: >
-    {% if windows | length > 0 %}
-      {{ windows | selectattr('1','equalto',min_sum) | map(attribute=0) | list | first }}
-    {% else %}
-      -1
-    {% endif %}
-  future_windows: >
-      {% if windows | length > 0 %}
-        {{ windows | selectattr('0','ge', now_hour | int) | list }}
-      {% else %}
-        []
-      {% endif %}
-  future_min_sum: >
-    {% if future_windows | length > 0 %}
-      {{ future_windows | map(attribute=1) | min }}
-    {% else %}
-      99999
-    {% endif %}
-  future_min_index: >
-    {% if future_windows | length > 0 %}
-      {{ future_windows | selectattr('1','equalto',future_min_sum) | map(attribute=0) | list | first }}
-    {% else %}
-      -1
-    {% endif %}
-  selected_index: >
-    {% if future_min_sum <= min_sum * (1 + tolerance) %}
-      {{ future_min_index }}
-    {% elif now_hour >= min_index and now_hour < (min_index + slot | int) %}
-      {{ min_index }}
-    {% else %}
-      -1
-    {% endif %}
 
 action:
+  - variables:
+      min_sum: 9999
+      min_index: 0
+      window: "{{ slot | int }}"
+  - repeat:
+      count: "{{ 24 - window + 1 }}"
+      sequence:
+        - variables:
+            idx: "{{ repeat.index - 1 }}"
+            window_sum: "{{ prices[idx:idx+window] | sum }}"
+        - choose:
+            - conditions: "{{ window_sum < min_sum }}"
+              sequence:
+                - variables:
+                    min_sum: "{{ window_sum }}"
+                    min_index: "{{ idx }}"
   - service: input_number.set_value
     target:
       entity_id: !input input_best_slot
     data:
-      value: "{{ selected_index }}"
+      value: "{{ min_index }}"
+  - variables:
+      now_hour: "{{ now().hour }}"
+      start_opt: "{{ min_index }}"
+      end_opt: "{{ min_index + window - 1 }}"
+      start_now: "{{ now_hour }}"
+      end_now: "{{ now_hour + window - 1 }}"
   - choose:
-      - conditions: "{{ selected_index != -1 and (now_hour | int) >= (selected_index | int) and (now_hour | int) < ((selected_index | int) + (slot | int)) }}"
+      - conditions: "{{ (start_now >= start_opt) and (end_now <= end_opt) }}"
         sequence:
           - choose:
               - conditions: "{{ input_on_before is defined }}"
@@ -146,4 +111,5 @@ action:
           - choose:
               - conditions: "{{ input_on_after is defined }}"
                 sequence: !input input_on_after
+
 mode: single

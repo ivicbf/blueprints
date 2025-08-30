@@ -69,10 +69,11 @@ triggers:
   - trigger: time_pattern
     minutes: 0
 
-action:
   - variables:
-      # slot: "{{ slot | int }}"
+      pvpc_sensor: !input pvpc_sensor
+      target_device: !input target_device
       slot: !input slot
+      # slot: "{{ slot | int }}"
       tolerance_percentage: !input tolerance_percentage
       tolerance: "{{ (tolerance_percentage / 100) | float }}"
       now_hour: "{{ now().hour }}"
@@ -115,6 +116,8 @@ action:
         {% else %}
           -1
         {% endif %}
+
+action:
   - service: input_number.set_value
     target:
       entity_id: !input input_best_slot

@@ -91,43 +91,43 @@ variables:
     {% endfor %}
     {{ out }}
   min_sum: >
-    {% if windows|length > 0 %}
+    {% if windows | length > 0 %}
       {{ windows | map(attribute=1) | min }}
     {% else %}
       99999
     {% endif %}
   min_index: >
-    {% if windows|length > 0 %}
+    {% if windows | length > 0 %}
       {{ windows | selectattr('1','equalto',min_sum) | map(attribute=0) | list | first }}
     {% else %}
       -1
     {% endif %}
-future_windows: >
-    {% if windows | length > 0 %}
-      {{ windows | selectattr('0','ge', now_hour | int) | list }}
+  future_windows: >
+      {% if windows | length > 0 %}
+        {{ windows | selectattr('0','ge', now_hour | int) | list }}
+      {% else %}
+        []
+      {% endif %}
+  future_min_sum: >
+    {% if future_windows | length > 0 %}
+      {{ future_windows | map(attribute=1) | min }}
     {% else %}
-      []
+      99999
     {% endif %}
-future_min_sum: >
-  {% if future_windows|length > 0 %}
-    {{ future_windows | map(attribute=1) | min }}
-  {% else %}
-    99999
-  {% endif %}
-future_min_index: >
-  {% if future_windows|length > 0 %}
-    {{ future_windows | selectattr('1','equalto',future_min_sum) | map(attribute=0) | list | first }}
-  {% else %}
-    -1
-  {% endif %}
-selected_index: >
-  {% if future_min_sum <= min_sum * (1 + tolerance) %}
-    {{ future_min_index }}
-  {% elif now_hour >= min_index and now_hour < (min_index + slot | int) %}
-    {{ min_index }}
-  {% else %}
-    -1
-  {% endif %}
+  future_min_index: >
+    {% if future_windows | length > 0 %}
+      {{ future_windows | selectattr('1','equalto',future_min_sum) | map(attribute=0) | list | first }}
+    {% else %}
+      -1
+    {% endif %}
+  selected_index: >
+    {% if future_min_sum <= min_sum * (1 + tolerance) %}
+      {{ future_min_index }}
+    {% elif now_hour >= min_index and now_hour < (min_index + slot | int) %}
+      {{ min_index }}
+    {% else %}
+      -1
+    {% endif %}
 
 action:
   - service: input_number.set_value

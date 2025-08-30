@@ -30,32 +30,32 @@ blueprint:
         entity:
           filter:
             domain: input_number
-    # actions_yes:
-    #   name: Acciones en la franja
-    #   description: Acciones que se ejecutan en la mejor franja.
-    #   icon: mdi:check
-    #   collapsed: true
-    #   input:
-    #     action_on_before:
-    #       name: Acciones antes de encender el dispositivo
-    #       default: []
-    #       selector:
-    #         action: {}
-    #     action_on_after:
-    #       name: Acciones despues de encender el dispositivo
-    #       default: []
-    #       selector:
-    #         action: {}
-    input_on_before:
-      name: Acciones antes de encender el dispositivo
-      default: []
-      selector:
-        action: {}
-    input_on_after:
-      name: Acciones después de encender el dispositivo
-      default: []
-      selector:
-        action: {}
+    actions_yes:
+      name: Acciones en la franja
+      description: Acciones que se ejecutan en la mejor franja.
+      icon: mdi:check
+      collapsed: true
+      input:
+        action_on_before:
+          name: Acciones antes de encender el dispositivo
+          default: []
+          selector:
+            action: {}
+        action_on_after:
+          name: Acciones despues de encender el dispositivo
+          default: []
+          selector:
+            action: {}
+    # input_on_before:
+    #   name: Acciones antes de encender el dispositivo
+    #   default: []
+    #   selector:
+    #     action: {}
+    # input_on_after:
+    #   name: Acciones después de encender el dispositivo
+    #   default: []
+    #   selector:
+    #     action: {}
 
 triggers:
   - trigger: time_pattern
@@ -104,12 +104,12 @@ action:
       - conditions: "{{ (start_now >= start_opt) and (end_now <= end_opt) }}"
         sequence:
           - choose:
-              - conditions: "{{ input_on_before is defined }}"
-                sequence: !input input_on_before
+              - conditions: "{{ action_on_before is defined }}"
+                sequence: !input action_on_before
           - service: switch.turn_on
             target: !input target_device
           - choose:
-              - conditions: "{{ input_on_after is defined }}"
-                sequence: !input input_on_after
+              - conditions: "{{ action_on_after is defined }}"
+                sequence: !input action_on_after
 
 mode: single

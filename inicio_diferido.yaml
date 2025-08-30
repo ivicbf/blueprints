@@ -72,7 +72,7 @@ triggers:
 variables:
   pvpc_sensor: !input pvpc_sensor
   target_device: !input target_device
-  slot: "{{ ( !input slot ) | int }}"
+  slot: !input slot
   tolerance_percentage: !input tolerance_percentage
   tolerance: "{{ (tolerance_percentage / 100) | float }}"
   now_hour: "{{ now().hour | int }}"
@@ -84,8 +84,9 @@ variables:
     ]
   windows: >
     {% set out = [] %}
-    {% for i in range(24 - slot + 1) %}
-      {% set s = (prices[i:i+slot] | sum) | float %}
+    {% set slot_int = slot | int %}
+    {% for i in range(24 - slot_int + 1) %}
+      {% set s = (prices[i:i+slot_int] | sum) | float %}
       {% set out = out + [[i, s]] %}
     {% endfor %}
     {{ out }}
@@ -122,7 +123,7 @@ future_min_index: >
 selected_index: >
   {% if future_min_sum <= min_sum * (1 + tolerance) %}
     {{ future_min_index }}
-  {% elif now_hour >= min_index and now_hour < (min_index + slot) %}
+  {% elif now_hour >= min_index and now_hour < (min_index + slot | int) %}
     {{ min_index }}
   {% else %}
     -1
@@ -135,7 +136,7 @@ action:
     data:
       value: "{{ selected_index }}"
   - choose:
-      - conditions: "{{ selected_index != -1 and now_hour >= selected_index and now_hour < (selected_index + slot) }}"
+      - conditions: "{{ selected_index != -1 and (now_hour | int) >= (selected_index | int) and (now_hour | int) < ((selected_index | int) + (slot | int)) }}"
         sequence:
           - choose:
               - conditions: "{{ input_on_before is defined }}"

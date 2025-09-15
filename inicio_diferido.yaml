@@ -89,7 +89,7 @@ action:
                 - variables:
                     min_sum: "{{ window_sum }}"
                     min_index: "{{ idx }}"
-  - service: input_number.set_value
+  - action: input_number.set_value
     target:
       entity_id: !input input_best_slot
     data:
@@ -100,16 +100,12 @@ action:
       end_opt: "{{ min_index + window - 1 }}"
       start_now: "{{ now_hour }}"
       end_now: "{{ now_hour + window - 1 }}"
-  - choose:
-      - conditions: "{{ (start_now >= start_opt) and (end_now <= end_opt) }}"
-        sequence:
-          - choose:
-              - conditions: "{{ action_on_before is defined }}"
-                sequence: !input action_on_before
-          - service: switch.turn_on
-            target: !input target_device
-          - choose:
-              - conditions: "{{ action_on_after is defined }}"
-                sequence: !input action_on_after
+- choose:
+  - conditions: '{{ (start_now >= start_opt) and (end_now <= end_opt) }}'
+    sequence:
+    - !input actions_yes.action_on_before
+    - action: switch.turn_on
+      target: !input target_device
+    - !input actions_yes.action_on_after
 
 mode: single

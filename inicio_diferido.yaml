@@ -103,9 +103,12 @@ action:
 - choose:
   - conditions: '{{ (start_now >= start_opt) and (end_now <= end_opt) }}'
     sequence:
-    - !input actions_yes.action_on_before
-    - action: switch.turn_on
+    - choose:
+      - conditions: '{{ action_on_before is defined }}'
+        sequence: !input action_on_before
+    - service: switch.turn_on
       target: !input target_device
-    - !input actions_yes.action_on_after
-
+    - choose:
+      - conditions: '{{ action_on_after is defined }}'
+        sequence: !input action_on_after
 mode: single

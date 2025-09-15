@@ -46,16 +46,16 @@ blueprint:
           default: []
           selector:
             action: {}
-    # input_on_before:
-    #   name: Acciones antes de encender el dispositivo
-    #   default: []
-    #   selector:
-    #     action: {}
-    # input_on_after:
-    #   name: Acciones después de encender el dispositivo
-    #   default: []
-    #   selector:
-    #     action: {}
+    input_on_before:
+      name: Acciones antes de encender el dispositivo
+      default: []
+      selector:
+        action: {}
+    input_on_after:
+      name: Acciones después de encender el dispositivo
+      default: []
+      selector:
+        action: {}
 
 triggers:
   - trigger: time_pattern

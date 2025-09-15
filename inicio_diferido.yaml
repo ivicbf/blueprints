@@ -46,16 +46,16 @@ blueprint:
           default: []
           selector:
             action: {}
-    input_on_before:
-      name: Acciones antes de encender el dispositivo
-      default: []
-      selector:
-        action: {}
-    input_on_after:
-      name: Acciones después de encender el dispositivo
-      default: []
-      selector:
-        action: {}
+    # input_on_before:
+    #   name: Acciones antes de encender el dispositivo
+    #   default: []
+    #   selector:
+    #     action: {}
+    # input_on_after:
+    #   name: Acciones después de encender el dispositivo
+    #   default: []
+    #   selector:
+    #     action: {}
 
 triggers:
   - trigger: time_pattern
@@ -104,12 +104,12 @@ action:
       - conditions: "{{ (start_now >= start_opt) and (end_now <= end_opt) }}"
         sequence:
           - choose:
-              - conditions: "{{ action_on_before is defined }}"
-                sequence: !input action_on_before
+              - conditions: []
+                default: !input action_on_before
           - service: switch.turn_on
             target: !input target_device
           - choose:
-              - conditions: "{{ action_on_after is defined }}"
-                sequence: !input action_on_after
+              - conditions: []
+                default: !input action_on_after
 
 mode: single

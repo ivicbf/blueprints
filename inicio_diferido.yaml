@@ -1,6 +1,7 @@
 blueprint:
   name: Inicio diferido
-  description: Detecta la mejor franja consecutiva con menor precio PVPC y activa el dispositivo durante esa franja.
+  description: Detecta la mejor franja consecutiva con menor precio PVPC y activa
+    el dispositivo durante esa franja.
   domain: automation
   input:
     pvpc_sensor:
@@ -8,28 +9,35 @@ blueprint:
       selector:
         entity:
           filter:
-            integration: pvpc_hourly_pricing
+          - integration: pvpc_hourly_pricing
+          multiple: false
+          reorder: false
     target_device:
       name: Dispositivo a controlar
-      description: 'Dispositivo a controlar'
+      description: Dispositivo a controlar
       selector:
-        target:
+        target: {}
     slot:
       name: Duración en horas de la franja
       description: Número de horas consecutivas para evaluar y activar el dispositivo
       default: 3
       selector:
         number:
-          min: 1
-          max: 24
-          step: 1
+          min: 1.0
+          max: 24.0
+          step: 1.0
+          mode: slider
     input_best_slot:
       name: Variable para almacenar la hora de inicio
-      description: Input_number que recibirá la hora de inicio de la siguiente mejor franja
+      description: Input_number que recibirá la hora de inicio de la siguiente mejor
+        franja
       selector:
         entity:
           filter:
-            domain: input_number
+          - domain:
+            - input_number
+          multiple: false
+          reorder: false
     actions_yes:
       name: Acciones en la franja
       description: Acciones que se ejecutan en la mejor franja.
@@ -46,68 +54,52 @@ blueprint:
           default: []
           selector:
             action: {}
-    # input_on_before:
-    #   name: Acciones antes de encender el dispositivo
-    #   default: []
-    #   selector:
-    #     action: {}
-    # input_on_after:
-    #   name: Acciones después de encender el dispositivo
-    #   default: []
-    #   selector:
-    #     action: {}
-
+  source_url: https://raw.githubusercontent.com/ivicbf/blueprints/refs/heads/main/inicio_diferido.yaml
 triggers:
-  - trigger: time_pattern
-    minutes: 0
-
+- trigger: time_pattern
+  minutes: 0
 variables:
   pvpc_sensor: !input pvpc_sensor
   target_device: !input target_device
   slot: !input slot
-  prices: >
-    [
-      {% for i in range(24) -%}
-        {{ state_attr(pvpc_sensor, 'price_' + (i|string).zfill(2) + 'h') | float(9999) }}{{ "," if not loop.last else "" }}
-      {%- endfor %}
-    ]
-
+  prices: "[\n  {% for i in range(24) -%}\n    {{ state_attr(pvpc_sensor, 'price_'
+    + (i|string).zfill(2) + 'h') | float(9999) }}{{ \",\" if not loop.last else \"\"
+    }}\n  {%- endfor %}\n]\n"
 action:
-  - variables:
-      min_sum: 9999
-      min_index: 0
-      window: "{{ slot | int }}"
-  - repeat:
-      count: "{{ 24 - window + 1 }}"
-      sequence:
-        - variables:
-            idx: "{{ repeat.index - 1 }}"
-            window_sum: "{{ prices[idx:idx+window] | sum }}"
-        - choose:
-            - conditions: "{{ window_sum < min_sum }}"
-              sequence:
-                - variables:
-                    min_sum: "{{ window_sum }}"
-                    min_index: "{{ idx }}"
-  - service: input_number.set_value
-    target:
-      entity_id: !input input_best_slot
-    data:
-      value: "{{ min_index }}"
-  - variables:
-      now_hour: "{{ now().hour }}"
-      start_opt: "{{ min_index }}"
-      end_opt: "{{ min_index + window - 1 }}"
-      start_now: "{{ now_hour }}"
-      end_now: "{{ now_hour + window - 1 }}"
-  - choose:
-      - conditions: "{{ (start_now >= start_opt) and (end_now <= end_opt) }}"
+- variables:
+    min_sum: 9999
+    min_index: 0
+    window: '{{ slot | int }}'
+- repeat:
+    count: '{{ 24 - window + 1 }}'
+    sequence:
+    - variables:
+        idx: '{{ repeat.index - 1 }}'
+        window_sum: '{{ prices[idx:idx+window] | sum }}'
+    - choose:
+      - conditions: '{{ window_sum < min_sum }}'
         sequence:
-          - choose: []
-            default: !input action_on_before
-          - service: switch.turn_on
-            target: !input target_device
-          - choose: []
-            default: !input action_on_after
-
+        - variables:
+            min_sum: '{{ window_sum }}'
+            min_index: '{{ idx }}'
+- service: input_number.set_value
+  target:
+    entity_id: !input input_best_slot
+  data:
+    value: '{{ min_index }}'
+- variables:
+    now_hour: '{{ now().hour }}'
+    start_opt: '{{ min_index }}'
+    end_opt: '{{ min_index + window - 1 }}'
+    start_now: '{{ now_hour }}'
+    end_now: '{{ now_hour + window - 1 }}'
+- choose:
+  - conditions: '{{ (start_now >= start_opt) and (end_now <= end_opt) }}'
+    sequence:
+    - choose: []
+      default: !input action_on_before
+    - service: switch.turn_on
+      target: !input target_device
+    - choose: []
+      default: !input action_on_after
 mode: single
